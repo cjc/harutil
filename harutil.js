@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 require('colorsafeconsole')(console)
 var fs = require('fs')
   , colors = require('colors')

@@ -1,0 +1,21 @@
+{
+  "author": "cjc <cjc@cjc.id.au>",
+  "name": "harutil",
+  "description": "Utility cli for HAR (http archive record) files - list, summarise, populate",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/cjc/harutil.git"
+  },
+  "engines": {
+    "node": ">=0.6.6"
+  },
+  "dependencies": {
+    "colorsafeconsole":"*",
+    "colors":"*",
+    "optimist":"*",
+    "async":"*"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {}
+}
