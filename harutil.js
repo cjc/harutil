@@ -7,6 +7,7 @@ var fs = require('fs')
   , async = require('async')
   , url = require('url')
   , http = require('http')
+  , https = require('https')
   , opt = require('optimist').usage("Usage: $0 [har file]")
     .boolean('l').alias('l','ls').describe('l','Show information about the response data stored for each request in the file')
     .boolean('s').describe('s','Show summary of requests in har file')
@@ -35,25 +36,34 @@ if (argv._.length > 0) {
 }
 
 function populateEntry(entry, callback) {
-  console.error(('Start processing ' + entry.request.url).yellow)
-  var options = url.parse(entry.request.url)
-  options.headers = entry.request.headers.reduce(function(m, i){m[i.name] = i.value;return m},{})
-  var request = http.get(options);
-  request.on('response', function (res) {
-    var t = []
-    res.on('data', function (chunk) {
-      t.push(chunk)
+  if (entry.response.content.text) {
+    console.error(('Content exists for ' + entry.request.url).blue)
+    process.nextTick(function(){callback()})
+  } else {
+    console.error(('Fetching ' + entry.request.url + ' ....').yellow)
+    var options = url.parse(entry.request.url)
+    options.headers = entry.request.headers.reduce(function(m, i){m[i.name] = i.value;return m},{})
+    var httper = options.protocol == 'https:' ? https : http
+    var request = httper[entry.request.method.toLowerCase()](options);
+    request.on('response', function (res) {
+      var t = []
+      res.on('data', function (chunk) {
+        t.push(chunk)
+      })
+      res.on('end',function(){
+        //TODO: concat buffers, for now be lazy and assume one
+        if (t.length == 0) {
+          console.error(('No data received for ' + entry.request.url).red)
+          callback()
+        } else {
+          entry.response.content.text = t[0].toString('base64')
+          entry.response.content.encoding = 'base64'
+          console.error(('Finished ' + entry.request.url).green)
+          callback()
+        }
+      })
     })
-    res.on('end',function(){
-      //TODO: concat buffers, for now be lazy and assume one
-      entry.response.content.text = t[0].toString('base64')
-      entry.response.content.encoding = 'base64'
-      console.error(('Finish processing ' + entry.request.url).green)
-      callback()
-    })
-  })
-
-  //setTimeout(function(){console.log(('Finish processing' + entry.request.url).green);callback()},2000)
+  }
 }
 
 function echoEntry(entry) {
